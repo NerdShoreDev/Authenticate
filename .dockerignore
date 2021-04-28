@@ -1,0 +1,9 @@
+# this ignores files and folders for docker image building
+node_modules
+**/*/.vs
+**/*db.lock
+vendor
+dist
+.cache
+.idea
+run

@@ -1,0 +1,54 @@
+#!/bin/bash
+
+set -eu
+
+function task_ensure_deps {
+  go get -u github.com/golang/dep/...
+  go get -u -v github.com/ahmetb/govvv
+  go get -u -v github.com/codegangsta/gin
+  dep ensure -v
+}
+
+function task_ensure_pre_commit {
+  # pre-commit hooks dependencies:
+  go get -u -v golang.org/x/lint/golint
+  go get -u -v github.com/BurntSushi/toml/cmd/tomlv
+  # prepare pre-commit hooks:
+  # sudo -E -H pip install pre-commit
+  # pre-commit install
+}
+
+function task_init {
+  task_ensure_deps
+}
+
+function task_test {
+  CGO_ENABLED=0 GOOS=linux go test ./... -v -cover
+}
+
+function task_run {
+  go run ./main.go $@
+}
+
+function task_build {
+  CGO_ENABLED=0 GOOS=linux run build -v \
+        -a -installsuffix cgo \
+        -ldflags "-v -s -w $(govvv -flags)" \
+        -o ".build/${PWD##*/}" \
+        main.go
+}
+
+function task_usage {
+  echo "Usage: $0 init | build | ensure_pre_commit"
+  exit 1
+}
+
+command=${1:-}
+shift || true
+case ${command} in
+  init) task_init ;;
+  build) task_build ;;
+  test) task_test ;;
+  ensure_pre_commit) task_ensure_pre_commit ;;
+  *) task_usage ;;
+esac
